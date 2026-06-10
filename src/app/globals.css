@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Premium Modern SaaS Palette - Light Mode (Cream Theme) */
+  --background: #FDFBF7; /* Rich Cream */
+  --foreground: #2D2721; /* Warm dark text */
+  
+  --sidebar: rgba(255, 253, 249, 0.75);
+  --sidebar-hover: rgba(245, 238, 227, 0.6);
+  
+  --card: rgba(255, 253, 249, 0.65);
+  --card-foreground: #2D2721;
+  
+  /* Brand Green - refined for SaaS */
+  --primary: #10B981; 
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #059669;
+  
+  --active-menu: #ECFDF5;
+  --active-menu-text: #059669;
+  
+  --success: #10B981;
+  --success-foreground: #FFFFFF;
+  
+  --warning: #F59E0B;
+  --warning-foreground: #FFFFFF;
+  
+  --danger: #EF4444;
+  --danger-foreground: #FFFFFF;
+
+  --confirmed: #3B82F6;
+  --confirmed-foreground: #FFFFFF;
+
+  --out-for-delivery: #8B5CF6;
+  --out-for-delivery-foreground: #FFFFFF;
+  
+  --muted: #EFEBE1;
+  --muted-foreground: #8C8477;
+  
+  --border: #E4E4E7;
+  
+  --radius: 1rem;
+}
+
+.dark {
+  /* Premium Modern SaaS Palette - Dark Mode */
+  --background: #09090B; /* Deep Space Black */
+  --foreground: #FAFAFA;
+  
+  --sidebar: #09090B;
+  --sidebar-hover: #27272A;
+  
+  --card: rgba(24, 24, 27, 0.7); /* Translucent dark cards */
+  --card-foreground: #FAFAFA;
+  
+  --primary: #10B981; /* Glowing green */
+  --primary-foreground: #09090B;
+  --primary-hover: #34D399;
+  
+  --active-menu: rgba(16, 185, 129, 0.15); /* Green tint */
+  --active-menu-text: #10B981;
+  
+  --success: #10B981;
+  --success-foreground: #09090B;
+  
+  --warning: #F59E0B;
+  --warning-foreground: #09090B;
+  
+  --danger: #EF4444;
+  --danger-foreground: #FAFAFA;
+  
+  --confirmed: #3B82F6;
+  --confirmed-foreground: #FAFAFA;
+
+  --out-for-delivery: #8B5CF6;
+  --out-for-delivery-foreground: #FAFAFA;
+  
+  --muted: #27272A;
+  --muted-foreground: #A1A1AA;
+  
+  --border: #27272A;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-active-menu: var(--active-menu);
+  --color-active-menu-text: var(--active-menu-text);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-confirmed: var(--confirmed);
+  --color-confirmed-foreground: var(--confirmed-foreground);
+  --color-out-for-delivery: var(--out-for-delivery);
+  --color-out-for-delivery-foreground: var(--out-for-delivery-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --font-sans: var(--font-inter);
+  --radius-xl: var(--radius);
+  --radius-lg: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 6px);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Premium utility classes */
+.glass-panel {
+  background-color: var(--card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+}
+
+.premium-shadow {
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+}
+
+.dark .premium-shadow {
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+}
+
+/* Base body gradient for extra depth */
+.layout-bg {
+  position: relative;
+  min-height: 100vh;
+}
+
+.layout-bg::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: -1;
+  background: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+              radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.dark .layout-bg::before {
+  background: radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.15) 0%, transparent 60%),
+              radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+}
