@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { LogOut, MapPin, Phone, CheckCircle2, Navigation, Package, User, Sun, Moon, KeyRound, X, Menu, History, LayoutDashboard, DollarSign, Bike, AlertCircle, Clock } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
+import axios from "axios"
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -100,31 +101,31 @@ export default function DeliveryDashboard() {
   }
 
   const fetchDashboard = async (token) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/dashboard-stats`, {
-      headers: { "Authorization": `Bearer ${token}` }
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/dashboard-stats`, {
+      headers: { "Authorization": `Bearer ${token}` }, validateStatus: () => true
     })
-    if (res.ok) {
-      const data = await res.json()
+    if (res.status === 200 || res.status === 201) {
+      const data = res.data
       setDashboardStats(data.data)
     } else if (res.status === 401) handleLogout()
   }
 
   const fetchEarnings = async (token) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/earnings`, {
-      headers: { "Authorization": `Bearer ${token}` }
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/earnings`, {
+      headers: { "Authorization": `Bearer ${token}` }, validateStatus: () => true
     })
-    if (res.ok) {
-      const data = await res.json()
+    if (res.status === 200 || res.status === 201) {
+      const data = res.data
       setEarningsStats(data.data)
     }
   }
 
   const fetchOrders = async (token) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/orders`, {
-      headers: { "Authorization": `Bearer ${token}` }
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/orders`, {
+      headers: { "Authorization": `Bearer ${token}` }, validateStatus: () => true
     })
-    if (res.ok) {
-      const data = await res.json()
+    if (res.status === 200 || res.status === 201) {
+      const data = res.data
       setOrders(data.data || [])
     } else if (res.status === 401) handleLogout()
   }
@@ -136,18 +137,15 @@ export default function DeliveryDashboard() {
     setUpdatingId(orderId)
     const token = localStorage.getItem("delivery_token")
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/orders/${orderId}/status`, {
-        method: "PUT",
+      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/orders/${orderId}/status`, { status }, {
         headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ status })
+          "Authorization": `Bearer ${token}`
+        }, validateStatus: () => true
       })
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         fetchOrders(token); // Refresh orders
       } else {
-        const errorData = await res.json();
+        const errorData = res.data;
         alert(`Failed to update status: ${errorData.message}`);
       }
     } catch (err) {
@@ -163,16 +161,13 @@ export default function DeliveryDashboard() {
     setProfileLoading(true)
     try {
       const token = localStorage.getItem("delivery_token")
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/profile`, {
-        method: "PUT",
+      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/profile`, profileForm, {
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(profileForm)
+        }, validateStatus: () => true
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Failed to update profile")
+      const data = res.data
+      if (res.status !== 200 && res.status !== 201) throw new Error(data.message || "Failed to update profile")
       
       setUser(data.data)
       localStorage.setItem("delivery_user", JSON.stringify(data.data))
@@ -199,16 +194,13 @@ export default function DeliveryDashboard() {
     setPassLoading(true)
     try {
       const token = localStorage.getItem("delivery_token")
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/change-password`, {
-        method: "POST",
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/change-password`, passForm, {
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(passForm)
+        }, validateStatus: () => true
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Failed to change password")
+      const data = res.data
+      if (res.status !== 200 && res.status !== 201) throw new Error(data.message || "Failed to change password")
       
       setPassMsg({ type: 'success', text: 'Password changed successfully!' })
       setPassForm({ currentPassword: '', newPassword: '' })
@@ -226,13 +218,9 @@ export default function DeliveryDashboard() {
     setForgotLoading(true)
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Failed to send OTP")
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/forgot-password`, { email: user.email }, { validateStatus: () => true })
+      const data = res.data
+      if (res.status !== 200 && res.status !== 201) throw new Error(data.message || "Failed to send OTP")
       setForgotMessage(data.message || "OTP sent to your email")
       setForgotStep(2)
     } catch (err) {
@@ -249,13 +237,9 @@ export default function DeliveryDashboard() {
     setForgotLoading(true)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email, otp: forgotOtp, newPassword: forgotNewPassword }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Failed to reset password")
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/reset-password`, { email: user.email, otp: forgotOtp, newPassword: forgotNewPassword }, { validateStatus: () => true })
+      const data = res.data
+      if (res.status !== 200 && res.status !== 201) throw new Error(data.message || "Failed to reset password")
       
       setForgotMessage("Password reset successfully!")
       setTimeout(() => {
