@@ -60,6 +60,8 @@ export default function DeliveryDashboard() {
   const [forgotMessage, setForgotMessage] = useState("")
   const [forgotError, setForgotError] = useState("")
   const [forgotLoading, setForgotLoading] = useState(false)
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, orderId: null, status: null })
+  const [otpInput, setOtpInput] = useState("")
 
   useEffect(() => {
     const token = localStorage.getItem("delivery_token")
@@ -130,14 +132,25 @@ export default function DeliveryDashboard() {
     } else if (res.status === 401) handleLogout()
   }
 
-  const handleUpdateStatus = async (orderId, status) => {
-    if (status === 'DELIVERED' && !confirm("Are you sure you want to mark this order as DELIVERED?")) return;
-    if (status === 'FAILED' && !confirm("Are you sure you want to mark this order as FAILED?")) return;
-    
+  const handleUpdateStatus = (orderId, status) => {
+    if (status === 'DELIVERED' || status === 'FAILED') {
+      setConfirmModal({ isOpen: true, orderId, status });
+      setOtpInput(""); // reset otp
+    } else {
+      executeStatusUpdate(orderId, status);
+    }
+  }
+
+  const executeStatusUpdate = async (orderId, status) => {
+    if (status === 'DELIVERED' && (!otpInput || otpInput.length !== 4)) {
+      alert("Please enter a valid 4-digit OTP provided by the customer.");
+      return;
+    }
+    setConfirmModal({ isOpen: false, orderId: null, status: null });
     setUpdatingId(orderId)
     const token = localStorage.getItem("delivery_token")
     try {
-      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/orders/${orderId}/status`, { status }, {
+      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/delivery-boy/orders/${orderId}/status`, { status, otp: otpInput }, {
         headers: { 
           "Authorization": `Bearer ${token}`
         }, validateStatus: () => true
@@ -273,6 +286,59 @@ export default function DeliveryDashboard() {
           className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(false)}
         />
+      )}
+
+      {/* Custom Confirm Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[var(--card)] w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-[var(--border)] animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+                confirmModal.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+              }`}>
+                {confirmModal.status === 'DELIVERED' ? <CheckCircle2 className="w-8 h-8" /> : <AlertCircle className="w-8 h-8" />}
+              </div>
+              <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">
+                Confirm {confirmModal.status === 'DELIVERED' ? 'Delivery' : 'Failure'}
+              </h3>
+              <p className="text-[var(--muted-foreground)] mb-6 text-sm">
+                {confirmModal.status === 'DELIVERED' 
+                  ? 'Please enter the 4-digit OTP provided by the customer to complete this delivery.' 
+                  : 'Are you sure you want to mark this order as FAILED? This action cannot be undone.'}
+              </p>
+
+              {confirmModal.status === 'DELIVERED' && (
+                <div className="mb-6 w-full">
+                  <Input 
+                    type="number" 
+                    placeholder="Enter 4-digit OTP" 
+                    value={otpInput}
+                    onChange={(e) => setOtpInput(e.target.value.slice(0, 4))}
+                    className="text-center text-2xl tracking-[0.5em] h-14 font-bold border-2 focus-visible:ring-emerald-500"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3 w-full">
+                <Button 
+                  onClick={() => setConfirmModal({ isOpen: false, orderId: null, status: null })}
+                  variant="outline" 
+                  className="flex-1 rounded-xl h-12"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => executeStatusUpdate(confirmModal.orderId, confirmModal.status)}
+                  className={`flex-1 rounded-xl h-12 font-bold text-white shadow-md ${
+                    confirmModal.status === 'DELIVERED' ? 'bg-[#14452F] hover:bg-[#0C291C]' : 'bg-red-600 hover:bg-red-700'
+                  }`}
+                >
+                  Yes, Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Sidebar matching Admin Layout */}
@@ -592,13 +658,24 @@ export default function DeliveryDashboard() {
                           <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-1 block">Order ID</span>
                           <span className="text-lg font-bold text-[var(--foreground)]">#{order.orderNumber}</span>
                         </div>
-                        <Badge className={`shadow-sm ${
-                          order.orderStatus === 'DELIVERED' ? 'bg-green-600' :
-                          order.orderStatus === 'FAILED' ? 'bg-red-600' :
-                          'bg-[#E8A359] hover:bg-[#c48847]'
-                        } text-white`}>
-                          {order.orderStatus.replace(/_/g, ' ')}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          {['ASSIGNED', 'PICKED_UP', 'OUT_FOR_DELIVERY'].includes(order.orderStatus) && (
+                            <div className="flex items-center gap-1.5 bg-green-100 dark:bg-green-900/30 px-2.5 py-1 rounded-full border border-green-200 dark:border-green-800">
+                              <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                              </span>
+                              <span className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-wider">Active</span>
+                            </div>
+                          )}
+                          <Badge className={`shadow-sm ${
+                            order.orderStatus === 'DELIVERED' ? 'bg-green-600' :
+                            order.orderStatus === 'FAILED' ? 'bg-red-600' :
+                            'bg-[#E8A359] hover:bg-[#c48847]'
+                          } text-white`}>
+                            {order.orderStatus.replace(/_/g, ' ')}
+                          </Badge>
+                        </div>
                       </div>
 
                       <CardContent className="p-5 flex-1 flex flex-col gap-5">
