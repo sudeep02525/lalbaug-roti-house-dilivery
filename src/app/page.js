@@ -85,6 +85,16 @@ export default function DeliveryDashboard() {
     fetchData(token)
   }, [router, activeTab])
 
+  // Listen for socket-triggered refreshes
+  useEffect(() => {
+    const handleRefresh = () => {
+      const token = localStorage.getItem("delivery_token")
+      if (token) fetchData(token)
+    }
+    window.addEventListener("refresh_orders", handleRefresh)
+    return () => window.removeEventListener("refresh_orders", handleRefresh)
+  }, [activeTab])
+
   const fetchData = async (token) => {
     setLoading(true)
     try {
@@ -731,8 +741,15 @@ export default function DeliveryDashboard() {
                           <p className="text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Order Items</p>
                           <div className="space-y-1.5 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                             {order.items?.map((item, idx) => (
-                              <div key={idx} className="flex justify-between text-sm">
-                                <span className="text-[var(--foreground)] font-medium"><span className="text-[var(--muted-foreground)]">{item.quantity}x</span> {item.name || 'Item'}</span>
+                              <div key={idx} className="text-sm pb-1.5 border-b border-[var(--border)]/30 last:border-0 last:pb-0">
+                                <div className="flex justify-between">
+                                  <span className="text-[var(--foreground)] font-medium"><span className="text-[var(--muted-foreground)] font-bold">{item.quantity}x</span> {item.name || item.product?.name || 'Item'}</span>
+                                </div>
+                                {item.addons && item.addons.length > 0 && (
+                                  <div className="text-[11px] text-[var(--muted-foreground)] mt-0.5 pl-5">
+                                    + {item.addons.map(a => `${a.name} (x${a.quantity || 1})`).join(', ')}
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
